@@ -1,152 +1,1260 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>V0nsen — Мои проекты</title>
-    <style>
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-            background-color: #0d1117;
-            color: #c9d1d9;
-            max-width: 800px;
-            margin: 0 auto;
-            padding: 40px 20px;
-            line-height: 1.6;
-        }
-        header {
-            border-bottom: 1px solid #30363d;
-            padding-bottom: 20px;
-            margin-bottom: 30px;
-        }
-        h1 { color: #ffffff; margin: 0; }
-        .subtitle { color: #8b949e; margin-top: 5px; }
-        .repo-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-            gap: 20px;
-        }
-        .repo-card {
-            background-color: #161b22;
-            border: 1px solid #30363d;
-            border-radius: 6px;
-            padding: 20px;
-            transition: transform 0.2s, border-color 0.2s;
-            display: flex;
-            flex-direction: column;
-            justify-content: space-between;
-        }
-        .repo-card:hover {
-            border-color: #58a6ff;
-            transform: translateY(-2px);
-        }
-        .repo-title {
-            color: #58a6ff;
-            text-decoration: none;
-            font-size: 1.2em;
-            font-weight: bold;
-        }
-        .repo-title:hover { text-decoration: underline; }
-        .repo-desc {
-            color: #8b949e;
-            font-size: 0.9em;
-            margin: 10px 0 15px 0;
-        }
-        .repo-meta {
-            font-size: 0.8em;
-            color: #8b949e;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-        .lang-badge {
-            background-color: #21262d;
-            padding: 2px 8px;
-            border-radius: 12px;
-            border: 1px solid #30363d;
-        }
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Космический уклон</title>
+<style>
+  * { box-sizing: border-box; user-select: none; }
+  body {
+    margin: 0; min-height: 100vh;
+    background: radial-gradient(ellipse at center, #0a0e1a 0%, #000 100%);
+    display: flex; justify-content: center; align-items: center;
+    font-family: 'Segoe UI', Roboto, system-ui, sans-serif;
+    padding: 1rem;
+  }
+  .game-wrapper {
+    background: #0a0f1c;
+    padding: 1.2rem 1.6rem 1.5rem 1.6rem;
+    border-radius: 2rem;
+    box-shadow: 0 0 40px #4f9eff22, 0 20px 40px -10px #000000cc, inset 0 0 8px #2e3b4e;
+    display: flex; flex-direction: column; align-items: center;
+    position: relative;
+  }
+  canvas {
+    display: block;
+    background: #05070f;
+    border-radius: 1.5rem;
+    box-shadow: 0 0 0 2px #2e4b6e, inset 0 0 40px #4f9eff11;
+    width: 600px; height: 400px;
+  }
+
+  .menu-overlay {
+    position: absolute; inset: 1.2rem 1.6rem 1.5rem 1.6rem;
+    background: rgba(3, 6, 14, 0.95);
+    border-radius: 1.5rem;
+    display: flex; flex-direction: column; justify-content: center; align-items: center;
+    gap: 1rem; padding: 2rem;
+    backdrop-filter: blur(6px);
+    z-index: 10; transition: opacity 0.3s ease;
+  }
+  .menu-overlay.hidden { opacity: 0; pointer-events: none; }
+
+  .menu-title {
+    font-size: 2.4rem; font-weight: 900; letter-spacing: 3px;
+    background: linear-gradient(135deg, #4f9eff, #a855f7, #ff5c8a);
+    -webkit-background-clip: text; background-clip: text;
+    -webkit-text-fill-color: transparent;
+    text-align: center;
+    filter: drop-shadow(0 0 20px #4f9eff88);
+  }
+  .menu-subtitle {
+    color: #6b8db0; font-size: 0.9rem; text-align: center;
+    line-height: 1.6;
+  }
+  .menu-subtitle kbd {
+    background: #1e2d3f; padding: 2px 8px; border-radius: 6px;
+    color: #9fc9ff; font-family: inherit; font-size: 0.8rem;
+    box-shadow: 0 2px 0 #0b1a2a; margin: 0 2px;
+  }
+
+  .best-score {
+    color: #ffd166; font-size: 0.85rem;
+    background: #0b121b; padding: 0.4rem 1.2rem;
+    border-radius: 2rem; box-shadow: inset 0 -2px 0 #00000055;
+    letter-spacing: 0.5px;
+  }
+
+  .start-btn {
+    background: linear-gradient(135deg, #4f9eff, #3b82f6);
+    border: none; font-weight: 800; font-size: 1.1rem;
+    padding: 0.9rem 3rem; border-radius: 3rem;
+    color: #fff; cursor: pointer; letter-spacing: 2px;
+    box-shadow: 0 7px 0 #1e3a8a, 0 11px 25px #4f9eff55;
+    transition: 0.1s linear; text-transform: uppercase;
+    font-family: inherit;
+  }
+  .start-btn:hover { background: linear-gradient(135deg, #60a9ff, #4f9eff); }
+  .start-btn:active {
+    transform: translateY(5px);
+    box-shadow: 0 2px 0 #1e3a8a, 0 6px 15px #4f9eff55;
+  }
+
+  .status-panel {
+    width: 100%;
+    display: flex; justify-content: space-between; align-items: center;
+    gap: 0.6rem; margin-top: 1rem;
+    padding: 0.6rem 1.1rem;
+    background: #0b121b; border-radius: 3rem;
+    box-shadow: inset 0 5px 8px #00000055, 0 5px 10px #00000040;
+    color: #cbd5e1; font-weight: 600;
+  }
+  .stat { display: flex; flex-direction: column; align-items: center; flex: 1; }
+  .stat-label {
+    font-size: 0.6rem; color: #6b8db0;
+    text-transform: uppercase; letter-spacing: 1px;
+    margin-bottom: 2px;
+  }
+  .stat-value {
+    background: #1e2d3f; padding: 0.3rem 0.9rem;
+    border-radius: 2rem; font-size: 1.1rem;
+    box-shadow: inset 0 -2px 0 #3d5a7a, 0 4px 8px #00000030;
+    min-width: 70px; text-align: center;
+    white-space: nowrap; font-weight: 700;
+    transition: all 0.2s;
+  }
+  .stat-value.score { color: #4f9eff; }
+  .stat-value.lives { color: #ff5c8a; letter-spacing: 2px; }
+  .stat-value.level { color: #ffd166; }
+  .stat-value.speed { color: #a855f7; }
+  .stat-value.combo {
+    color: #ffd166;
+    min-width: 60px;
+  }
+  .stat-value.combo.hot {
+    color: #ff8c42;
+    text-shadow: 0 0 12px #ff8c42aa;
+    transform: scale(1.1);
+  }
+
+  button.reset-btn {
+    background: #2d4b6e; border: 1px solid #5780aa;
+    font-weight: 600; font-size: 0.9rem;
+    padding: 0.55rem 1.2rem; border-radius: 3rem;
+    color: #e8f0fe; cursor: pointer;
+    box-shadow: 0 5px 0 #0b1a2a, 0 7px 13px #00000060;
+    transition: 0.08s linear; font-family: inherit;
+    white-space: nowrap;
+  }
+  button.reset-btn:hover { background: #3d6088; }
+  button.reset-btn:active {
+    transform: translateY(3px);
+    box-shadow: 0 2px 0 #0b1a2a, 0 4px 8px #00000060;
+  }
+
+  .hint {
+    color: #6b8db0; font-size: 0.78rem;
+    margin-top: 0.8rem;
+    display: flex; gap: 0.6rem; align-items: center;
+    flex-wrap: wrap; justify-content: center;
+  }
+  .hint span {
+    background: #192837; padding: 0.3rem 0.75rem;
+    border-radius: 20px; box-shadow: inset 0 -2px 0 #0e1926;
+    display: flex; align-items: center; gap: 0.4rem;
+  }
+  kbd {
+    background: #2d4b6e; padding: 1px 7px;
+    border-radius: 5px; color: #e8f0fe;
+    font-family: inherit; font-size: 0.75rem;
+    box-shadow: 0 2px 0 #0b1a2a;
+  }
+
+  .toast {
+    position: absolute; top: 30%; left: 50%;
+    transform: translate(-50%, -50%) scale(0.8);
+    background: linear-gradient(135deg, #a855f7, #4f9eff);
+    color: #fff; padding: 0.8rem 2rem;
+    border-radius: 1.2rem; font-weight: 800;
+    font-size: 1.1rem; text-align: center;
+    box-shadow: 0 20px 40px -10px #a855f788;
+    z-index: 15; opacity: 0; pointer-events: none;
+    transition: opacity 0.3s, transform 0.3s;
+    letter-spacing: 0.5px;
+  }
+  .toast.show {
+    opacity: 1; transform: translate(-50%, -50%) scale(1);
+  }
+  .toast.combo-toast {
+    background: linear-gradient(135deg, #ffd166, #ff8c42);
+    color: #1a2639;
+    box-shadow: 0 20px 40px -10px #ffd16688;
+  }
+
+  /* Активные бонусы */
+  .buffs-bar {
+    position: absolute;
+    top: 0.5rem;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    gap: 0.4rem;
+    pointer-events: none;
+    z-index: 6;
+  }
+  .buff {
+    background: #0b121bdd;
+    padding: 0.3rem 0.7rem;
+    border-radius: 2rem;
+    font-size: 0.75rem;
+    font-weight: 800;
+    display: flex;
+    align-items: center;
+    gap: 0.3rem;
+    backdrop-filter: blur(4px);
+    box-shadow: inset 0 -2px 0 #00000055;
+    animation: buffPulse 1.2s infinite;
+  }
+  @keyframes buffPulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.7; }
+  }
+  .buff.shield { color: #4f9eff; box-shadow: inset 0 -2px 0 #00000055, 0 0 12px #4f9eff88; }
+  .buff.triple { color: #ff5c8a; box-shadow: inset 0 -2px 0 #00000055, 0 0 12px #ff5c8a88; }
+  .buff.magnet { color: #a855f7; box-shadow: inset 0 -2px 0 #00000055, 0 0 12px #a855f788; }
+</style>
 </head>
 <body>
+<div class="game-wrapper">
+  <canvas id="gameCanvas" width="600" height="400"></canvas>
 
-    <header>
-        <h1>Привет, я V0nsen 👋</h1>
-        <div class="subtitle">Мои последние проекты и публикации с GitHub</div>
-    </header>
+  <div class="buffs-bar" id="buffsBar"></div>
 
-    <main>
-        <div id="repos" class="repo-grid">Загрузка проектов...</div>
-    </main>
+  <div class="toast" id="toast"></div>
 
-    <script>
-        const username = 'progame25093-dotcom';
-        const reposContainer = document.getElementById('repos');
-        const apiUrl = 'https://github.com' + username + '/repos?sort=updated&per_page=10';
+  <div class="menu-overlay" id="menuOverlay">
+    <div class="menu-title">КОСМИЧЕСКИЙ УКЛОН</div>
+    <div class="menu-subtitle">
+      Управляй кораблём, уклоняйся от астероидов,<br>
+      собирай кристаллы и сбивай врагов!<br>
+      Ловь бонусы — щит, тройной выстрел, магнит и жизнь.<br><br>
+      <kbd>←</kbd>/<kbd>→</kbd> или <kbd>A</kbd>/<kbd>D</kbd> — движение<br>
+      <kbd>Пробел</kbd> — выстрел
+    </div>
+    <div class="best-score" id="bestScore">Рекорд: 0</div>
+    <button class="start-btn" id="startBtn">Начать полёт</button>
+  </div>
 
-        async function fetchRepos() {
-            try {
-                const response = await fetch(apiUrl);
-                const data = await response.json();
+  <div class="status-panel">
+    <div class="stat">
+      <span class="stat-label">Счёт</span>
+      <span class="stat-value score" id="scoreDisplay">0</span>
+    </div>
+    <div class="stat">
+      <span class="stat-label">Жизни</span>
+      <span class="stat-value lives" id="livesDisplay">❤❤❤</span>
+    </div>
+    <div class="stat">
+      <span class="stat-label">Уровень</span>
+      <span class="stat-value level" id="levelDisplay">1</span>
+    </div>
+    <div class="stat">
+      <span class="stat-label">Комбо</span>
+      <span class="stat-value combo" id="comboDisplay">×1</span>
+    </div>
+    <div class="stat">
+      <span class="stat-label">Скорость</span>
+      <span class="stat-value speed" id="speedDisplay">1.0</span>
+    </div>
+    <button class="reset-btn" id="resetBtn">Меню</button>
+  </div>
 
-                if (!response.ok) {
-                    throw new Error(data.message || 'Ошибка HTTP: ' + response.status);
-                }
+  <div class="hint">
+    <span><kbd>←</kbd>/<kbd>→</kbd> или <kbd>A</kbd>/<kbd>D</kbd></span>
+    <span><kbd>Пробел</kbd> — стрелять</span>
+  </div>
+</div>
 
-                reposContainer.innerHTML = '';
+<script>
+(function() {
+  const canvas = document.getElementById('gameCanvas');
+  const ctx = canvas.getContext('2d');
+  const scoreDisplay = document.getElementById('scoreDisplay');
+  const livesDisplay = document.getElementById('livesDisplay');
+  const levelDisplay = document.getElementById('levelDisplay');
+  const speedDisplay = document.getElementById('speedDisplay');
+  const comboDisplay = document.getElementById('comboDisplay');
+  const menuOverlay = document.getElementById('menuOverlay');
+  const startBtn = document.getElementById('startBtn');
+  const resetBtn = document.getElementById('resetBtn');
+  const bestScoreEl = document.getElementById('bestScore');
+  const toast = document.getElementById('toast');
+  const buffsBar = document.getElementById('buffsBar');
 
-                data.forEach(function(repo) {
-                    if (repo.name === username + '.github.io') return;
+  const CW = 600, CH = 400;
 
-                    const card = document.createElement('div');
-                    card.className = 'repo-card';
+  const PLAYER_W = 34, PLAYER_H = 30;
+  let player = { x: CW / 2 - PLAYER_W / 2, y: CH - 60, w: PLAYER_W, h: PLAYER_H };
+  const PLAYER_SPEED = 6.5;
 
-                    const titleLink = document.createElement('a');
-                    titleLink.href = repo.html_url;
-                    titleLink.target = '_blank';
-                    titleLink.className = 'repo-title';
-                    titleLink.textContent = repo.name;
+  let gameStarted = false;
+  let gameOver = false;
+  let score = 0;
+  let lives = 3;
+  let level = 1;
+  let speedMultiplier = 1;
+  let animationFrame = null;
+  let spawnTimer = 0;
+  let shootCooldown = 0;
+  let invulnerable = 0;
+  let starField = [];
 
-                    const desc = document.createElement('p');
-                    desc.className = 'repo-desc';
-                    desc.textContent = repo.description || 'Описание отсутствует';
+  // Комбо
+  let comboCount = 0;
+  let comboTimer = 0;
+  const COMBO_TIMEOUT = 180;
+  const ENEMY_BASE_SCORE = 15;
 
-                    const topDiv = document.createElement('div');
-                    topDiv.appendChild(titleLink);
-                    topDiv.appendChild(desc);
+  // ==== Активные бонусы ====
+  // shield: неуязвимость (кадры)
+  // triple: тройной выстрел (кадры)
+  // magnet: магнит (кадры)
+  let buffShield = 0;
+  let buffTriple = 0;
+  let buffMagnet = 0;
+  const SHIELD_DURATION = 300;   // 5 секунд
+  const TRIPLE_DURATION = 600;   // 10 секунд
+  const MAGNET_DURATION = 480;   // 8 секунд
 
-                    const metaDiv = document.createElement('div');
-                    metaDiv.className = 'repo-meta';
+  let asteroids = [];
+  let crystals = [];
+  let enemies = [];
+  let bullets = [];
+  let particles = [];
+  let floatingTexts = [];
+  let powerups = [];   // падающие бонусы
 
-                    if (repo.language) {
-                        const langSpan = document.createElement('span');
-                        langSpan.className = 'lang-badge';
-                        langSpan.textContent = repo.language;
-                        metaDiv.appendChild(langSpan);
-                    } else {
-                        metaDiv.appendChild(document.createElement('span'));
-                    }
+  let leftPressed = false;
+  let rightPressed = false;
+  let spacePressed = false;
 
-                    const dateSpan = document.createElement('span');
-                    const dateStr = new Date(repo.updated_at).toLocaleDateString('ru-RU');
-                    dateSpan.textContent = 'Обновлено: ' + dateStr;
-                    metaDiv.appendChild(dateSpan);
+  const BEST_KEY = 'spaceDodge_bestScore';
+  let bestScore = 0;
+  function loadBest() {
+    try {
+      const s = localStorage.getItem(BEST_KEY);
+      bestScore = s ? parseInt(s, 10) || 0 : 0;
+    } catch (e) { bestScore = 0; }
+    bestScoreEl.textContent = `Рекорд: ${bestScore}`;
+  }
+  function saveBest() {
+    if (score > bestScore) {
+      bestScore = score;
+      try { localStorage.setItem(BEST_KEY, String(bestScore)); } catch (e) {}
+      bestScoreEl.textContent = `Рекорд: ${bestScore}`;
+    }
+  }
 
-                    card.appendChild(topDiv);
-                    card.appendChild(metaDiv);
-                    reposContainer.appendChild(card);
-                });
+  function initStars() {
+    starField = [];
+    for (let i = 0; i < 80; i++) {
+      starField.push({
+        x: Math.random() * CW,
+        y: Math.random() * CH,
+        r: Math.random() * 1.5 + 0.3,
+        speed: Math.random() * 1.5 + 0.4,
+        alpha: Math.random() * 0.6 + 0.4
+      });
+    }
+  }
 
-                if (reposContainer.innerHTML === '') {
-                    reposContainer.innerHTML = '<p>Пока нет других публичных репозиториев.</p>';
-                }
-            } catch (error) {
-                reposContainer.innerHTML = '<p style="color: #f85149;">Не удалось загрузить проекты: ' + error.message + '</p>';
-                console.error(error);
-            }
+  function spawnAsteroid() {
+    const size = Math.random() * 20 + 16;
+    asteroids.push({
+      x: Math.random() * (CW - size),
+      y: -size,
+      w: size,
+      h: size,
+      speed: (Math.random() * 1.2 + 1.5) * speedMultiplier,
+      rot: 0,
+      rotSpeed: (Math.random() - 0.5) * 0.06,
+      vertices: makeAsteroidVertices(size)
+    });
+  }
+
+  function makeAsteroidVertices(size) {
+    const v = [];
+    const num = 7 + Math.floor(Math.random() * 3);
+    for (let i = 0; i < num; i++) {
+      const angle = (i / num) * Math.PI * 2;
+      const radius = size * 0.5 * (0.75 + Math.random() * 0.4);
+      v.push({ x: Math.cos(angle) * radius, y: Math.sin(angle) * radius });
+    }
+    return v;
+  }
+
+  function spawnCrystal() {
+    const size = 14;
+    crystals.push({
+      x: Math.random() * (CW - size),
+      y: -size,
+      w: size,
+      h: size,
+      speed: 1.8 * speedMultiplier,
+      rot: 0,
+      rotSpeed: 0.04 + Math.random() * 0.03
+    });
+  }
+
+  function spawnEnemy() {
+    const size = 26;
+    const fromLeft = Math.random() < 0.5;
+    enemies.push({
+      x: fromLeft ? -size : CW + size,
+      y: 40 + Math.random() * 120,
+      w: size,
+      h: size,
+      vx: (fromLeft ? 1 : -1) * (1.2 + Math.random() * 0.8) * speedMultiplier,
+      vy: (Math.random() - 0.5) * 0.8,
+      shootTimer: 60 + Math.random() * 60,
+      wobble: Math.random() * Math.PI * 2
+    });
+  }
+
+  // ==== Спавн бонуса ====
+  function spawnPowerup() {
+    const types = ['shield', 'triple', 'magnet', 'life'];
+    // Взвешенный выбор: жизнь реже
+    const r = Math.random();
+    let type;
+    if (r < 0.30) type = 'shield';
+    else if (r < 0.60) type = 'triple';
+    else if (r < 0.90) type = 'magnet';
+    else type = 'life';
+
+    const size = 22;
+    powerups.push({
+      x: Math.random() * (CW - size),
+      y: -size,
+      w: size,
+      h: size,
+      speed: 1.6 * speedMultiplier,
+      type,
+      rot: 0,
+      rotSpeed: 0.05,
+      bob: Math.random() * Math.PI * 2
+    });
+  }
+
+  const POWERUP_INFO = {
+    shield: { icon: '🛡', color: '#4f9eff', label: 'Щит' },
+    triple: { icon: '🔱', color: '#ff5c8a', label: 'Тройной выстрел' },
+    magnet: { icon: '🧲', color: '#a855f7', label: 'Магнит' },
+    life:   { icon: '❤',  color: '#ff5c8a', label: 'Жизнь' }
+  };
+
+  function spawnParticles(x, y, color, count) {
+    for (let i = 0; i < count; i++) {
+      const angle = Math.random() * Math.PI * 2;
+      const speed = Math.random() * 3 + 1;
+      particles.push({
+        x, y,
+        vx: Math.cos(angle) * speed,
+        vy: Math.sin(angle) * speed,
+        life: 30 + Math.random() * 20,
+        maxLife: 50,
+        color,
+        size: Math.random() * 3 + 1
+      });
+    }
+  }
+
+  function spawnFloatingText(x, y, text, color) {
+    floatingTexts.push({
+      x, y, text, color,
+      life: 45,
+      maxLife: 45,
+      vy: -1.2
+    });
+  }
+
+  function resetGame() {
+    gameOver = false;
+    score = 0;
+    lives = 3;
+    level = 1;
+    speedMultiplier = 1;
+    spawnTimer = 0;
+    shootCooldown = 0;
+    invulnerable = 0;
+    comboCount = 0;
+    comboTimer = 0;
+    buffShield = 0;
+    buffTriple = 0;
+    buffMagnet = 0;
+    asteroids = [];
+    crystals = [];
+    enemies = [];
+    bullets = [];
+    particles = [];
+    floatingTexts = [];
+    powerups = [];
+    player.x = CW / 2 - PLAYER_W / 2;
+    player.y = CH - 60;
+    leftPressed = false;
+    rightPressed = false;
+    spacePressed = false;
+    initStars();
+    updateHUD();
+    updateBuffsBar();
+  }
+
+  function updateHUD() {
+    scoreDisplay.textContent = score;
+    livesDisplay.textContent = '❤'.repeat(Math.max(0, lives)) + '·'.repeat(Math.max(0, 3 - lives));
+    levelDisplay.textContent = level;
+    speedDisplay.textContent = speedMultiplier.toFixed(1);
+
+    if (comboCount > 0 && comboTimer > 0) {
+      const mult = getComboMultiplier();
+      comboDisplay.textContent = `×${mult}`;
+      if (mult >= 3) comboDisplay.classList.add('hot');
+      else comboDisplay.classList.remove('hot');
+    } else {
+      comboDisplay.textContent = '×1';
+      comboDisplay.classList.remove('hot');
+    }
+  }
+
+  function updateBuffsBar() {
+    let html = '';
+    if (buffShield > 0) {
+      const sec = Math.ceil(buffShield / 60);
+      html += `<div class="buff shield">🛡 ${sec}с</div>`;
+    }
+    if (buffTriple > 0) {
+      const sec = Math.ceil(buffTriple / 60);
+      html += `<div class="buff triple">🔱 ${sec}с</div>`;
+    }
+    if (buffMagnet > 0) {
+      const sec = Math.ceil(buffMagnet / 60);
+      html += `<div class="buff magnet">🧲 ${sec}с</div>`;
+    }
+    buffsBar.innerHTML = html;
+  }
+
+  function getComboMultiplier() {
+    return Math.min(5, Math.max(1, comboCount + 1));
+  }
+
+  function showToast(text, isCombo) {
+    toast.textContent = text;
+    toast.classList.toggle('combo-toast', !!isCombo);
+    toast.classList.add('show');
+    clearTimeout(toast._timer);
+    toast._timer = setTimeout(() => toast.classList.remove('show'), 1200);
+  }
+
+  function handleKeyDown(e) {
+    const key = e.key.toLowerCase();
+    if (key === 'arrowleft' || key === 'a' || key === 'ф') {
+      leftPressed = true; e.preventDefault();
+    } else if (key === 'arrowright' || key === 'd' || key === 'в') {
+      rightPressed = true; e.preventDefault();
+    } else if (e.key === ' ' || key === 'spacebar') {
+      spacePressed = true; e.preventDefault();
+    }
+  }
+  function handleKeyUp(e) {
+    const key = e.key.toLowerCase();
+    if (key === 'arrowleft' || key === 'a' || key === 'ф') {
+      leftPressed = false; e.preventDefault();
+    } else if (key === 'arrowright' || key === 'd' || key === 'в') {
+      rightPressed = false; e.preventDefault();
+    } else if (e.key === ' ' || key === 'spacebar') {
+      spacePressed = false; e.preventDefault();
+    }
+  }
+
+  function rectsOverlap(a, b) {
+    return a.x < b.x + b.w && a.x + a.w > b.x &&
+           a.y < b.y + b.h && a.y + a.h > b.y;
+  }
+
+  function circleRectOverlap(cx, cy, r, rect) {
+    const nearestX = Math.max(rect.x, Math.min(cx, rect.x + rect.w));
+    const nearestY = Math.max(rect.y, Math.min(cy, rect.y + rect.h));
+    const dx = cx - nearestX;
+    const dy = cy - nearestY;
+    return dx * dx + dy * dy < r * r;
+  }
+
+  function update() {
+    if (gameOver || !gameStarted) return;
+
+    // ==== Игрок ====
+    if (leftPressed && !rightPressed) {
+      player.x = Math.max(0, player.x - PLAYER_SPEED);
+    } else if (rightPressed && !leftPressed) {
+      player.x = Math.min(CW - player.w, player.x + PLAYER_SPEED);
+    }
+
+    // ==== Стрельба ====
+    if (shootCooldown > 0) shootCooldown--;
+    if (spacePressed && shootCooldown <= 0) {
+      const cx = player.x + player.w / 2;
+      const cy = player.y - 4;
+      if (buffTriple > 0) {
+        // Тройной выстрел: три пули веером
+        bullets.push({ x: cx - 2, y: cy, w: 4, h: 12, vy: -9 });
+        bullets.push({ x: cx - 12, y: cy + 4, w: 4, h: 12, vy: -8.5, vx: -1.6 });
+        bullets.push({ x: cx + 8,  y: cy + 4, w: 4, h: 12, vy: -8.5, vx: 1.6 });
+      } else {
+        bullets.push({ x: cx - 2, y: cy, w: 4, h: 12, vy: -9 });
+      }
+      shootCooldown = 12;
+      spawnParticles(cx, player.y, '#4f9eff', 4);
+    }
+
+    if (invulnerable > 0) invulnerable--;
+
+    // ==== Таймеры бонусов ====
+    if (buffShield > 0) buffShield--;
+    if (buffTriple > 0) buffTriple--;
+    if (buffMagnet > 0) buffMagnet--;
+    // Обновляем бар раз в 10 кадров, чтобы не дёргался
+    if ((buffShield > 0 || buffTriple > 0 || buffMagnet > 0) && Math.random() < 0.05) {
+      updateBuffsBar();
+    }
+    if (buffShield === 0 && buffTriple === 0 && buffMagnet === 0 && Math.random() < 0.05) {
+      updateBuffsBar();
+    }
+
+    if (comboTimer > 0) {
+      comboTimer--;
+      if (comboTimer === 0 && comboCount > 0) {
+        comboCount = 0;
+        updateHUD();
+      }
+    }
+
+    // ==== Спавн ====
+    spawnTimer++;
+    const spawnRate = Math.max(20, 55 - level * 3);
+    if (spawnTimer >= spawnRate) {
+      spawnTimer = 0;
+      const r = Math.random();
+      if (r < 0.45) spawnAsteroid();
+      else if (r < 0.68) spawnCrystal();
+      else if (r < 0.85 || level >= 2) spawnEnemy();
+      else if (r < 0.95) spawnPowerup();
+      else spawnAsteroid();
+    }
+
+    // ==== Звёзды ====
+    starField.forEach(s => {
+      s.y += s.speed * speedMultiplier;
+      if (s.y > CH) {
+        s.y = 0;
+        s.x = Math.random() * CW;
+      }
+    });
+
+    // ==== Астероиды ====
+    asteroids.forEach(a => {
+      a.y += a.speed;
+      a.rot += a.rotSpeed;
+    });
+    asteroids = asteroids.filter(a => a.y < CH + 40);
+
+    // ==== Кристаллы ====
+    crystals.forEach(c => {
+      c.y += c.speed;
+      c.rot += c.rotSpeed;
+
+      // Магнит притягивает кристаллы
+      if (buffMagnet > 0) {
+        const dx = (player.x + player.w / 2) - (c.x + c.w / 2);
+        const dy = (player.y + player.h / 2) - (c.y + c.h / 2);
+        const dist = Math.sqrt(dx * dx + dy * dy);
+        if (dist < 200 && dist > 1) {
+          const force = 0.8 / (dist / 60);
+          c.x += (dx / dist) * force;
+          c.y += (dy / dist) * force;
+        }
+      }
+    });
+    crystals = crystals.filter(c => c.y < CH + 30);
+
+    // ==== Враги ====
+    enemies.forEach(e => {
+      e.wobble += 0.08;
+      e.x += e.vx;
+      e.y += e.vy + Math.sin(e.wobble) * 0.6;
+      if (e.y < 20) e.y = 20;
+      if (e.y > CH - 100) e.y = CH - 100;
+
+      e.shootTimer--;
+      if (e.shootTimer <= 0 && e.x > 0 && e.x < CW) {
+        const dx = (player.x + player.w / 2) - (e.x + e.w / 2);
+        const dy = (player.y + player.h / 2) - (e.y + e.h / 2);
+        const dist = Math.sqrt(dx * dx + dy * dy);
+        const speed = 3;
+        bullets.push({
+          x: e.x + e.w / 2 - 3,
+          y: e.y + e.h / 2,
+          w: 6,
+          h: 6,
+          vx: (dx / dist) * speed,
+          vy: (dy / dist) * speed,
+          enemy: true
+        });
+        e.shootTimer = 90 + Math.random() * 60;
+      }
+    });
+    enemies = enemies.filter(e => e.x > -60 && e.x < CW + 60);
+
+    // ==== Бонусы (падение) ====
+    powerups.forEach(p => {
+      p.y += p.speed;
+      p.rot += p.rotSpeed;
+      p.bob += 0.1;
+    });
+    powerups = powerups.filter(p => p.y < CH + 30);
+
+    // ==== Пули ====
+    bullets.forEach(b => {
+      b.x += b.vx || 0;
+      b.y += b.vy || 0;
+    });
+    bullets = bullets.filter(b => b.y > -20 && b.y < CH + 20 && b.x > -20 && b.x < CW + 20);
+
+    // ==== Частицы ====
+    particles.forEach(p => {
+      p.x += p.vx;
+      p.y += p.vy;
+      p.vx *= 0.96;
+      p.vy *= 0.96;
+      p.life--;
+    });
+    particles = particles.filter(p => p.life > 0);
+
+    // ==== Всплывающие тексты ====
+    floatingTexts.forEach(t => {
+      t.y += t.vy;
+      t.life--;
+    });
+    floatingTexts = floatingTexts.filter(t => t.life > 0);
+
+    // ==== Коллизии: игрок ↔ астероид ====
+    if (invulnerable <= 0 && buffShield <= 0) {
+      for (let i = asteroids.length - 1; i >= 0; i--) {
+        const a = asteroids[i];
+        const dx = (player.x + player.w / 2) - (a.x + a.w / 2);
+        const dy = (player.y + player.h / 2) - (a.y + a.h / 2);
+        const dist = Math.sqrt(dx * dx + dy * dy);
+        if (dist < (player.w / 2 + a.w / 2) * 0.75) {
+          hitPlayer();
+          break;
+        }
+      }
+    } else if (buffShield > 0) {
+      // Со щитом — астероиды уничтожаются при столкновении
+      for (let i = asteroids.length - 1; i >= 0; i--) {
+        const a = asteroids[i];
+        const dx = (player.x + player.w / 2) - (a.x + a.w / 2);
+        const dy = (player.y + player.h / 2) - (a.y + a.h / 2);
+        const dist = Math.sqrt(dx * dx + dy * dy);
+        if (dist < (player.w / 2 + a.w / 2) * 0.75) {
+          spawnParticles(a.x + a.w / 2, a.y + a.h / 2, '#4f9eff', 15);
+          score += 5;
+          asteroids.splice(i, 1);
+        }
+      }
+    }
+
+    // ==== Коллизии: игрок ↔ враг ====
+    if (invulnerable <= 0) {
+      for (let i = enemies.length - 1; i >= 0; i--) {
+        const e = enemies[i];
+        if (rectsOverlap(player, e)) {
+          enemies.splice(i, 1);
+          if (buffShield > 0) {
+            spawnParticles(e.x + e.w / 2, e.y + e.h / 2, '#4f9eff', 12);
+          } else {
+            hitPlayer();
+          }
+          break;
+        }
+      }
+    }
+
+    // ==== Коллизии: игрок ↔ кристалл ====
+    for (let i = crystals.length - 1; i >= 0; i--) {
+      const c = crystals[i];
+      if (rectsOverlap(player, c)) {
+        crystals.splice(i, 1);
+        score += 10;
+        spawnParticles(c.x + c.w / 2, c.y + c.h / 2, '#a855f7', 10);
+        spawnFloatingText(c.x + c.w / 2, c.y, '+10', '#a855f7');
+        updateHUD();
+        checkLevelUp();
+      }
+    }
+
+    // ==== Коллизии: игрок ↔ бонус ====
+    for (let i = powerups.length - 1; i >= 0; i--) {
+      const p = powerups[i];
+      if (rectsOverlap(player, p)) {
+        applyPowerup(p.type);
+        spawnParticles(p.x + p.w / 2, p.y + p.h / 2, POWERUP_INFO[p.type].color, 14);
+        powerups.splice(i, 1);
+      }
+    }
+
+    // ==== Коллизии: ПУЛЯ ИГРОКА ↔ АСТЕРОИД (взаимное уничтожение) ====
+    for (let i = bullets.length - 1; i >= 0; i--) {
+      const b = bullets[i];
+      if (b.enemy) continue;
+      let bulletUsed = false;
+      for (let j = asteroids.length - 1; j >= 0; j--) {
+        const a = asteroids[j];
+        if (rectsOverlap(b, a)) {
+          // Пуля и астероид уничтожаются
+          spawnParticles(a.x + a.w / 2, a.y + a.h / 2, '#ff5c8a', 10);
+          spawnParticles(b.x + b.w / 2, b.y + b.h / 2, '#4f9eff', 6);
+          asteroids.splice(j, 1);
+          score += 3;
+          updateHUD();
+          checkLevelUp();
+          bulletUsed = true;
+          break;
+        }
+      }
+      if (bulletUsed) bullets.splice(i, 1);
+    }
+
+    // ==== Коллизии: пуля игрока ↔ враг (с комбо) ====
+    for (let i = bullets.length - 1; i >= 0; i--) {
+      const b = bullets[i];
+      if (b.enemy) continue;
+      for (let j = enemies.length - 1; j >= 0; j--) {
+        const e = enemies[j];
+        if (rectsOverlap(b, e)) {
+          enemies.splice(j, 1);
+          bullets.splice(i, 1);
+
+          comboCount++;
+          comboTimer = COMBO_TIMEOUT;
+          const mult = getComboMultiplier();
+          const earned = ENEMY_BASE_SCORE * mult;
+          score += earned;
+
+          spawnParticles(e.x + e.w / 2, e.y + e.h / 2, '#ffd166', 12);
+
+          const text = `+${earned}`;
+          const color = mult >= 3 ? '#ff8c42' : (mult >= 2 ? '#ffd166' : '#4f9eff');
+          spawnFloatingText(e.x + e.w / 2, e.y + e.h / 2, text, color);
+
+          if (comboCount >= 2 && comboCount <= 6) {
+            showToast(`🔥 КОМБО ×${mult}!`, true);
+          }
+
+          updateHUD();
+          checkLevelUp();
+          break;
+        }
+      }
+    }
+
+    // ==== Коллизии: пуля врага ↔ игрок ====
+    if (invulnerable <= 0) {
+      for (let i = bullets.length - 1; i >= 0; i--) {
+        const b = bullets[i];
+        if (!b.enemy) continue;
+        if (rectsOverlap(b, player)) {
+          bullets.splice(i, 1);
+          if (buffShield > 0) {
+            spawnParticles(b.x, b.y, '#4f9eff', 6);
+          } else {
+            hitPlayer();
+          }
+          break;
+        }
+      }
+    }
+
+    // ==== Коллизии: пуля врага ↔ пуля игрока ====
+    for (let i = bullets.length - 1; i >= 0; i--) {
+      if (!bullets[i].enemy) continue;
+      for (let j = bullets.length - 1; j >= 0; j--) {
+        if (bullets[j].enemy) continue;
+        if (rectsOverlap(bullets[i], bullets[j])) {
+          spawnParticles(bullets[i].x, bullets[i].y, '#fff', 5);
+          bullets.splice(Math.max(i, j), 1);
+          bullets.splice(Math.min(i, j), 1);
+          break;
+        }
+      }
+    }
+  }
+
+  function applyPowerup(type) {
+    const info = POWERUP_INFO[type];
+    switch (type) {
+      case 'shield':
+        buffShield = SHIELD_DURATION;
+        showToast('🛡 Щит!');
+        break;
+      case 'triple':
+        buffTriple = TRIPLE_DURATION;
+        showToast('🔱 Тройной выстрел!');
+        break;
+      case 'magnet':
+        buffMagnet = MAGNET_DURATION;
+        showToast('🧲 Магнит!');
+        break;
+      case 'life':
+        if (lives < 5) {
+          lives++;
+          showToast('❤ +1 жизнь!');
+        } else {
+          score += 50;
+          showToast('❤ +50 очков!');
+        }
+        break;
+    }
+    updateHUD();
+    updateBuffsBar();
+  }
+
+  function hitPlayer() {
+    lives--;
+    invulnerable = 90;
+    comboCount = 0;
+    comboTimer = 0;
+    spawnParticles(player.x + player.w / 2, player.y + player.h / 2, '#ff5c8a', 20);
+    updateHUD();
+    if (lives <= 0) {
+      gameOver = true;
+      saveBest();
+    }
+  }
+
+  function checkLevelUp() {
+    const newLevel = Math.floor(score / 100) + 1;
+    if (newLevel > level) {
+      level = newLevel;
+      speedMultiplier = 1 + (level - 1) * 0.2;
+      showToast(`⚡ Уровень ${level}!`);
+      updateHUD();
+    }
+  }
+
+  function draw() {
+    ctx.fillStyle = '#05070f';
+    ctx.fillRect(0, 0, CW, CH);
+
+    starField.forEach(s => {
+      ctx.globalAlpha = s.alpha;
+      ctx.fillStyle = '#9fc9ff';
+      ctx.beginPath();
+      ctx.arc(s.x, s.y, s.r, 0, Math.PI * 2);
+      ctx.fill();
+    });
+    ctx.globalAlpha = 1;
+
+    if (!gameStarted) return;
+
+    // Частицы
+    particles.forEach(p => {
+      const alpha = p.life / p.maxLife;
+      ctx.globalAlpha = alpha;
+      ctx.fillStyle = p.color;
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+      ctx.fill();
+    });
+    ctx.globalAlpha = 1;
+
+    // Кристаллы
+    crystals.forEach(c => {
+      ctx.save();
+      ctx.translate(c.x + c.w / 2, c.y + c.h / 2);
+      ctx.rotate(c.rot);
+      ctx.shadowColor = '#a855f7';
+      ctx.shadowBlur = 15;
+      ctx.fillStyle = '#a855f7';
+      ctx.beginPath();
+      ctx.moveTo(0, -c.h / 2);
+      ctx.lineTo(c.w / 2, 0);
+      ctx.lineTo(0, c.h / 2);
+      ctx.lineTo(-c.w / 2, 0);
+      ctx.closePath();
+      ctx.fill();
+      ctx.shadowBlur = 0;
+      ctx.fillStyle = '#d8b4fe';
+      ctx.beginPath();
+      ctx.moveTo(0, -c.h / 2);
+      ctx.lineTo(c.w / 4, -c.h / 8);
+      ctx.lineTo(0, 0);
+      ctx.closePath();
+      ctx.fill();
+      ctx.restore();
+    });
+
+    // ==== Бонусы (падающие) ====
+    powerups.forEach(p => {
+      const info = POWERUP_INFO[p.type];
+      ctx.save();
+      ctx.translate(p.x + p.w / 2, p.y + p.h / 2 + Math.sin(p.bob) * 2);
+      ctx.rotate(p.rot * 0.3);
+      // Свечение
+      ctx.shadowColor = info.color;
+      ctx.shadowBlur = 20;
+      // Круглая капсула
+      ctx.fillStyle = info.color;
+      ctx.beginPath();
+      ctx.arc(0, 0, p.w / 2, 0, Math.PI * 2);
+      ctx.fill();
+      // Внутренний круг
+      ctx.shadowBlur = 6;
+      ctx.fillStyle = '#0a0f1c';
+      ctx.beginPath();
+      ctx.arc(0, 0, p.w / 2 - 3, 0, Math.PI * 2);
+      ctx.fill();
+      // Иконка
+      ctx.shadowBlur = 0;
+      ctx.font = 'bold 14px "Segoe UI", Roboto, sans-serif';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillStyle = info.color;
+      ctx.fillText(info.icon, 0, 1);
+      ctx.restore();
+    });
+
+    // Астероиды
+    asteroids.forEach(a => {
+      ctx.save();
+      ctx.translate(a.x + a.w / 2, a.y + a.h / 2);
+      ctx.rotate(a.rot);
+      ctx.shadowColor = '#ff5c8a';
+      ctx.shadowBlur = 18;
+      ctx.fillStyle = '#5a3d4a';
+      ctx.beginPath();
+      a.vertices.forEach((v, i) => {
+        if (i === 0) ctx.moveTo(v.x, v.y);
+        else ctx.lineTo(v.x, v.y);
+      });
+      ctx.closePath();
+      ctx.fill();
+      ctx.strokeStyle = '#ff5c8a';
+      ctx.lineWidth = 2;
+      ctx.stroke();
+      ctx.shadowBlur = 0;
+      ctx.fillStyle = '#3d2833';
+      ctx.beginPath();
+      ctx.arc(-a.w * 0.15, -a.h * 0.1, a.w * 0.12, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.beginPath();
+      ctx.arc(a.w * 0.15, a.h * 0.15, a.w * 0.08, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.restore();
+    });
+
+    // Враги
+    enemies.forEach(e => {
+      ctx.save();
+      ctx.translate(e.x + e.w / 2, e.y + e.h / 2);
+      const wobble = Math.sin(e.wobble) * 0.15;
+      ctx.rotate(wobble);
+      ctx.shadowColor = '#ffd166';
+      ctx.shadowBlur = 15;
+      ctx.fillStyle = '#8a5a2a';
+      ctx.beginPath();
+      ctx.moveTo(-e.w / 2, -e.h / 3);
+      ctx.lineTo(e.w / 2, 0);
+      ctx.lineTo(-e.w / 2, e.h / 3);
+      ctx.closePath();
+      ctx.fill();
+      ctx.strokeStyle = '#ffd166';
+      ctx.lineWidth = 1.5;
+      ctx.stroke();
+      ctx.shadowBlur = 8;
+      ctx.fillStyle = '#ff5c8a';
+      ctx.beginPath();
+      ctx.arc(-e.w * 0.15, 0, 3, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.restore();
+    });
+
+    // Пули
+    bullets.forEach(b => {
+      ctx.shadowColor = b.enemy ? '#ffd166' : '#4f9eff';
+      ctx.shadowBlur = 12;
+      ctx.fillStyle = b.enemy ? '#ffd166' : '#4f9eff';
+      if (b.enemy) {
+        ctx.beginPath();
+        ctx.arc(b.x + b.w / 2, b.y + b.h / 2, b.w / 2, 0, Math.PI * 2);
+        ctx.fill();
+      } else {
+        ctx.beginPath();
+        ctx.roundRect(b.x, b.y, b.w, b.h, 3);
+        ctx.fill();
+      }
+    });
+
+    // ==== Игрок ====
+    if (!gameOver) {
+      const flicker = invulnerable > 0 && Math.floor(invulnerable / 4) % 2 === 0;
+      if (!flicker) {
+        ctx.save();
+        ctx.translate(player.x + player.w / 2, player.y + player.h / 2);
+
+        // Щит — обводка вокруг корабля
+        if (buffShield > 0) {
+          const pulse = 0.7 + Math.sin(Date.now() * 0.01) * 0.3;
+          ctx.shadowColor = '#4f9eff';
+          ctx.shadowBlur = 25;
+          ctx.strokeStyle = `rgba(79, 158, 255, ${pulse})`;
+          ctx.lineWidth = 3;
+          ctx.beginPath();
+          ctx.arc(0, 0, player.w * 0.85, 0, Math.PI * 2);
+          ctx.stroke();
         }
 
-        fetchRepos();
-    </script>
+        ctx.shadowColor = '#4f9eff';
+        ctx.shadowBlur = 18;
+        ctx.fillStyle = '#4f9eff';
+        ctx.beginPath();
+        ctx.moveTo(0, -player.h / 2);
+        ctx.lineTo(-player.w / 2, player.h / 2);
+        ctx.lineTo(-player.w / 4, player.h / 3);
+        ctx.lineTo(player.w / 4, player.h / 3);
+        ctx.lineTo(player.w / 2, player.h / 2);
+        ctx.closePath();
+        ctx.fill();
+        ctx.shadowBlur = 8;
+        ctx.fillStyle = '#9fc9ff';
+        ctx.beginPath();
+        ctx.arc(0, -player.h * 0.1, 4, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.shadowColor = '#ffd166';
+        ctx.shadowBlur = 15;
+        ctx.fillStyle = `rgba(255, 209, 102, ${0.6 + Math.random() * 0.4})`;
+        ctx.beginPath();
+        ctx.moveTo(-6, player.h / 3);
+        ctx.lineTo(0, player.h / 2 + 6 + Math.random() * 4);
+        ctx.lineTo(6, player.h / 3);
+        ctx.closePath();
+        ctx.fill();
+        ctx.restore();
+      }
+    }
 
+    // Всплывающие тексты
+    floatingTexts.forEach(t => {
+      const alpha = Math.min(1, t.life / 25);
+      ctx.globalAlpha = alpha;
+      ctx.font = 'bold 18px "Segoe UI", Roboto, sans-serif';
+      ctx.fillStyle = t.color;
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.shadowColor = t.color;
+      ctx.shadowBlur = 12;
+      ctx.fillText(t.text, t.x, t.y);
+      ctx.shadowBlur = 0;
+    });
+    ctx.globalAlpha = 1;
+
+    // Экран проигрыша
+    if (gameOver) {
+      ctx.fillStyle = 'rgba(0, 0, 0, 0.82)';
+      ctx.fillRect(0, 0, CW, CH);
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+
+      ctx.font = 'bold 44px "Segoe UI", Roboto, sans-serif';
+      ctx.fillStyle = '#ff5c8a';
+      ctx.shadowColor = '#ff5c8a';
+      ctx.shadowBlur = 25;
+      ctx.fillText('ИГРА ОКОНЧЕНА', CW / 2, CH / 2 - 70);
+
+      ctx.font = 'bold 32px "Segoe UI", Roboto, sans-serif';
+      ctx.fillStyle = '#4f9eff';
+      ctx.shadowColor = '#4f9eff';
+      ctx.shadowBlur = 15;
+      ctx.fillText(`Счёт: ${score}`, CW / 2, CH / 2 - 5);
+
+      ctx.font = '20px "Segoe UI", Roboto, sans-serif';
+      ctx.fillStyle = '#a855f7';
+      ctx.shadowBlur = 10;
+      ctx.fillText(`Достигнут уровень: ${level}`, CW / 2, CH / 2 + 40);
+
+      ctx.shadowBlur = 0;
+      if (score >= bestScore && score > 0) {
+        ctx.fillStyle = '#ffd166';
+        ctx.font = 'bold 18px "Segoe UI", Roboto, sans-serif';
+        ctx.fillText('🏆 НОВЫЙ РЕКОРД!', CW / 2, CH / 2 + 80);
+      } else {
+        ctx.fillStyle = '#94a3b8';
+        ctx.font = '16px "Segoe UI", Roboto, sans-serif';
+        ctx.fillText(`Рекорд: ${bestScore}`, CW / 2, CH / 2 + 80);
+      }
+
+      ctx.fillStyle = '#6b8db0';
+      ctx.font = '15px "Segoe UI", Roboto, sans-serif';
+      ctx.fillText('Нажми «Меню» для возврата', CW / 2, CH / 2 + 120);
+    }
+  }
+
+  if (!CanvasRenderingContext2D.prototype.roundRect) {
+    CanvasRenderingContext2D.prototype.roundRect = function(x, y, w, h, r) {
+      if (w < 2 * r) r = w / 2;
+      if (h < 2 * r) r = h / 2;
+      this.moveTo(x + r, y);
+      this.lineTo(x + w - r, y);
+      this.quadraticCurveTo(x + w, y, x + w, y + r);
+      this.lineTo(x + w, y + h - r);
+      this.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+      this.lineTo(x + r, y + h);
+      this.quadraticCurveTo(x, y + h, x, y + h - r);
+      this.lineTo(x, y + r);
+      this.quadraticCurveTo(x, y, x + r, y);
+      return this;
+    };
+  }
+
+  function gameLoop() {
+    if (gameStarted && !gameOver) update();
+    draw();
+    if (gameStarted) {
+      animationFrame = requestAnimationFrame(gameLoop);
+    } else {
+      animationFrame = null;
+    }
+  }
+
+  function startGame() {
+    resetGame();
+    gameStarted = true;
+    menuOverlay.classList.add('hidden');
+    if (animationFrame) cancelAnimationFrame(animationFrame);
+    gameLoop();
+  }
+
+  function showMenu() {
+    gameStarted = false;
+    gameOver = false;
+    if (animationFrame) {
+      cancelAnimationFrame(animationFrame);
+      animationFrame = null;
+    }
+    resetGame();
+    menuOverlay.classList.remove('hidden');
+    draw();
+  }
+
+  startBtn.addEventListener('click', startGame);
+  resetBtn.addEventListener('click', showMenu);
+
+  window.addEventListener('keydown', handleKeyDown);
+  window.addEventListener('keyup', handleKeyUp);
+
+  document.addEventListener('keydown', (e) => {
+    if (!menuOverlay.classList.contains('hidden')) {
+      if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        startGame();
+      }
+    }
+  });
+
+  loadBest();
+  initStars();
+  resetGame();
+  draw();
+})();
+</script>
 </body>
 </html>
